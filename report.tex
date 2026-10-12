@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{microtype}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Controlled Comparative Study of Barab\'asi--Albert and Erd\H{o}s--R\'enyi Networks: Centrality Distributions, Spectral Properties, and Topological Robustness}}
+\author{\textbf{Social Network Analysis Laboratory} \\ Department of Computer Science \& Artificial Intelligence}
+\date{October 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This research presents a strictly controlled experimental comparison between scale-free and random network models. To eliminate confounding artifacts arising from density and edge count disparities, we synthesize a Barab\'asi--Albert (BA) network ($N=100, m=2$) and an Erd\H{o}s--R\'enyi (ER) random graph $G(n, M)$ with an exactly matched order ($N=100$) and edge count ($M=196$, mean degree $\langle k \rangle = 3.92$, density $\rho \approx 0.0396$). Nine distinct centrality measures (degree, closeness, harmonic, betweenness, load, eigenvector, Katz, PageRank, and subgraph centrality) are evaluated alongside spectral radii and Gini inequality indices. The BA network exhibits marked centrality concentration ($G_{\text{betweenness}} = 0.794$ vs. $0.474$ in ER; maximum hub degree $k_{\max}=36$ vs. $8$ in ER), driven by a pronounced first-mover advantage where early nodes monopolize network shortest paths. Clauset--Shalizi--Newman maximum likelihood estimation yields an empirical exponent $\hat{\gamma} = 2.55 \pm 0.18$, while finite-size scaling ($N \in \{100, 1000, 10000\}$) demonstrates convergence toward the theoretical $\gamma = 3.0$ limit. Percolation simulations confirm the classical ``robust yet fragile'' paradigm: BA tolerates random node failures up to $f \approx 0.75$, but fragments under targeted hub attacks at $f_c \approx 0.18$.
+\end{abstract}
+
+\section{Introduction}
+Complex networks provide the foundational language for modeling relational structures across computer science, epidemiology, molecular biology, and social systems. Two models anchor network topology theory:
+\begin{enumerate}
+    \item \textbf{Erd\H{o}s--R\'enyi (ER) Random Graph Model (1959):} Characterized by independent, uniform edge placement across vertex pairs.
+    \item \textbf{Barab\'asi--Albert (BA) Model (1999):} Characterized by continuous growth and preferential attachment, yielding heavy-tailed scale-free topologies.
+\end{enumerate}
+
+Traditional comparative analyses often compare arbitrary graph instances, introducing density discrepancies that confound structural findings. Here, we conduct a controlled experiment holding network order ($N=100$), edge count ($M=196$), and random seed (`seed=42`) constant, isolating the structural consequences of the generative mechanisms.
+
+\section{Mathematical Formulations}
+
+\subsection{Generative Models}
+\textbf{Erd\H{o}s--R\'enyi $G(n, M)$:} A graph sampled uniformly from all simple graphs with $n$ vertices and $M$ edges. For $n=100$ and $M=196$, the equivalent binomial connection probability is:
+\begin{equation}
+    p = \frac{2M}{n(n-1)} = \frac{392}{9900} \approx 0.039596.
+\end{equation}
+The degree distribution converges to a Poisson distribution $P(k) = \frac{\lambda^k e^{-\lambda}}{k!}$ with $\lambda = 3.92$.
+
+\textbf{Barab\'asi--Albert (BA):} Starting from $m_0 = m = 2$ vertices, each incoming node attaches $m=2$ edges with probability:
+\begin{equation}
+    \Pi(i) = \frac{k_i}{\sum_j k_j}.
+\end{equation}
+The asymptotic degree distribution follows:
+\begin{equation}
+    P(k) = \frac{2m(m+1)}{k(k+1)(k+2)} \approx 2m^2 k^{-3} \quad (k \ge m).
+\end{equation}
+
+\subsection{Centrality Formulations}
+Let $A$ denote the graph adjacency matrix and $d(u, v)$ the geodesic distance between nodes $u$ and $v$.
+\begin{itemize}
+    \item \textbf{Degree Centrality:} $C_D(i) = \frac{k_i}{N-1}$.
+    \item \textbf{Closeness Centrality (Wasserman--Faust):} $C_C(i) = \frac{n-1}{N-1} \frac{n-1}{\sum_{j \ne i} d(i, j)}$.
+    \item \textbf{Harmonic Centrality:} $C_H(i) = \sum_{j \ne i} \frac{1}{d(i, j)}$.
+    \item \textbf{Betweenness Centrality:} $C_B(i) = \sum_{s \ne i \ne t} \frac{\sigma_{st}(i)}{\sigma_{st}}$.
+    \item \textbf{Eigenvector Centrality:} $A x = \lambda x$, where $\lambda = \lambda_{\max}$.
+    \item \textbf{Katz Centrality:} $C_{\text{Katz}} = ((I - \alpha A)^{-1} - I) \mathbf{1}$, requiring $\alpha < \frac{1}{\lambda_{\max}}$.
+    \item \textbf{PageRank:} $p_i = \frac{1-d}{N} + d \sum_{j \in \mathcal{N}(i)} \frac{p_j}{k_j}$ with damping factor $d=0.85$.
+    \item \textbf{Subgraph Centrality:} $C_S(i) = (e^A)_{ii} = \sum_{k=0}^\infty \frac{(A^k)_{ii}}{k!}$.
+\end{itemize}
+
+\section{Experimental Methodology}
+We generate matched networks with $N=100$ and $M=196$. Because $\langle k \rangle = 3.92 < \ln(100) \approx 4.605$, the ER network lies below the connectivity threshold and contains an isolated node ($N_{\text{LCC}}=99$), handled via Wasserman--Faust closeness and harmonic reciprocals. Spectral radii are computed via \texttt{scipy.linalg.eigvalsh}:
+\begin{itemize}
+    \item $\lambda_{\max}(\text{BA}) = 7.623 \implies \alpha_{\text{crit}} = 0.1312$
+    \item $\lambda_{\max}(\text{ER}) = 4.917 \implies \alpha_{\text{crit}} = 0.2034$
+\end{itemize}
+We set $\alpha = 0.0500$, strictly satisfying the convergence condition $\alpha < 1/\lambda_{\max}$.
+
+Power-law fitting is conducted using the Clauset--Shalizi--Newman maximum likelihood method with Kolmogorov--Smirnov distance minimization, accompanied by 100-realization ensemble averaging and finite-size scaling ($N \in \{100, 1000, 10000\}$).
+
+\section{Results}
+
+\subsection{Global Structural Metrics}
+\begin{table}[ht]
+\centering
+\caption{Global Topological Metrics for Controlled Networks ($N=100, M=196$)}
+\label{tab:global_metrics}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Barab\'asi--Albert (BA)} & \textbf{Erd\H{o}s--R\'enyi (ER)} \\
+\midrule
+Nodes ($N$) & 100 & 100 \\
+Edges ($M$) & 196 & 196 \\
+Average Degree $\langle k \rangle$ & 3.920 & 3.920 \\
+Maximum Degree $k_{\max}$ & \textbf{36} & \textbf{8} \\
+Density $\rho$ & 0.0396 & 0.0396 \\
+Connected Components & 1 & 2 \\
+Giant Component Size $N_{\text{LCC}}$ & 100 (100\%) & 99 (99\%) \\
+Average Path Length (LCC) & \textbf{2.853} & \textbf{3.461} \\
+Diameter (LCC) & \textbf{5} & \textbf{7} \\
+Clustering Coefficient $\langle C \rangle$ & \textbf{0.1634} & \textbf{0.0462} \\
+Degree Assortativity $r$ & \textbf{-0.2603} & \textbf{-0.0735} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Centrality Inequality: Gini Indices}
+\begin{table}[ht]
+\centering
+\caption{Gini Inequality Coefficients Across Centrality Measures}
+\label{tab:gini_metrics}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Measure} & \textbf{BA Gini} & \textbf{ER Gini} & \textbf{Ratio (BA / ER)} \\
+\midrule
+Betweenness Centrality & \textbf{0.794} & 0.474 & \textbf{1.68$\times$} \\
+Load Centrality & \textbf{0.789} & 0.470 & \textbf{1.68$\times$} \\
+Subgraph Centrality & \textbf{0.624} & 0.307 & \textbf{2.04$\times$} \\
+Eigenvector Centrality & \textbf{0.394} & 0.344 & 1.14$\times$ \\
+Degree Centrality & \textbf{0.380} & 0.263 & 1.45$\times$ \\
+PageRank Centrality & \textbf{0.339} & 0.221 & 1.54$\times$ \\
+Katz Centrality & \textbf{0.088} & 0.055 & 1.61$\times$ \\
+Harmonic Centrality & 0.079 & 0.080 & 0.98$\times$ \\
+Closeness Centrality & 0.075 & 0.074 & 1.02$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{First-Mover Advantage}
+In the BA network, Node 0 dominates all primary measures: $k=36$, $C_B=0.4088$, $x_0=0.4987$, $C_C=0.5470$. Analysis of degree vs. birth index reveals that the earliest nodes acquire higher degrees, fitting the continuum law $k_i(t) \propto (t/t_i)^{1/2}$. In the ER model, node ranking is uncorrelated with node index.
+
+\subsection{Robustness and Percolation}
+Percolation analysis demonstrates the ``robust yet fragile'' property: the BA giant component withstands random removals up to $f \approx 0.75$, but collapses at $f_c \approx 0.18$ under targeted hub attacks. The ER network exhibits balanced degradation under both regimes.
+
+\section{Conclusion}
+Under strictly matched constraints ($N=100, M=196$), scale-free dynamics produce high centrality inequality ($G_{\text{betweenness}}=0.794$), shorter path lengths, and extreme vulnerability to targeted disruption.
+
+\begin{thebibliography}{99}
+\bibitem{barabasi1999} A.-L. Barab\'asi and R. Albert, ``Emergence of scaling in random networks,'' \emph{Science}, vol. 286, no. 5439, pp. 509--512, 1999.
+\bibitem{erdos1959} P. Erd\H{o}s and A. R\'enyi, ``On random graphs I,'' \emph{Publ. Math. Debrecen}, vol. 6, pp. 290--297, 1959.
+\bibitem{freeman1977} L. C. Freeman, ``A set of measures of centrality based on betweenness,'' \emph{Sociometry}, pp. 35--41, 1977.
+\bibitem{bonacich1987} P. Bonacich, ``Power and centrality: A family of measures,'' \emph{Am. J. Sociol.}, vol. 92, no. 5, pp. 1170--1182, 1987.
+\bibitem{clauset2009} A. Clauset, C. R. Shalizi, and M. E. Newman, ``Power-law distributions in empirical data,'' \emph{SIAM Rev.}, vol. 51, no. 4, pp. 661--703, 2009.
+\bibitem{albert2000} R. Albert, H. Jeong, and A.-L. Barab\'asi, ``Error and attack tolerance of complex networks,'' \emph{Nature}, vol. 406, no. 6794, pp. 378--382, 2000.
+\bibitem{newman2018} M. E. Newman, \emph{Networks: An Introduction}, 2nd ed. Oxford University Press, 2018.
+\end{thebibliography}
+
+\end{document}

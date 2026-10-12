@@ -1,0 +1,3 @@
+Network Model,Nodes (N),Edges (M),Average Degree <k>,Max Degree k_max,Density,Connected Components,Giant Component Size (N_LCC),Avg Shortest Path (LCC),Diameter (LCC),Avg Clustering Coefficient <C>,Degree Assortativity (r)
+Barabási–Albert (BA),100,196,3.92,36,0.0396,1,100,2.853,5,0.1634,-0.2603
+Erdős–Rényi (ER),100,196,3.92,8,0.0396,2,99,3.461,7,0.0462,-0.0735
